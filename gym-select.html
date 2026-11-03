@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0c10">
+  <title>Renewal Radar — Select Gym</title>
+  <style>
+    :root, [data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0a0c10;
+      --txt: #f1f3f7;
+      --dim: #98a1b3;
+      --dim2: #737d8b;
+      --line: rgba(255,255,255,.075);
+      --line-2: rgba(255,255,255,.12);
+      --surface: rgba(255,255,255,.032);
+      --surface-2: rgba(255,255,255,.055);
+      --surface-3: rgba(255,255,255,.085);
+      --blue: #5b9dff;
+      --blue-soft: #9cc4ff;
+      --green: #3ddc84;
+      --input-bg: rgba(0,0,0,.28);
+      --input-bg-focus: rgba(0,0,0,.36);
+      --btn-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 1px 2px rgba(0,0,0,.25);
+      --glow-1: rgba(91,157,255,.13);
+      --glow-2: rgba(167,139,250,.11);
+      --glow-3: rgba(61,220,132,.05);
+    }
+
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg: #f2f4f8;
+      --txt: #10141c;
+      --dim: #525c6e;
+      --dim2: #5f6a7c;
+      --line: rgba(15,20,30,.10);
+      --line-2: rgba(15,20,30,.18);
+      --surface: rgba(15,20,30,.03);
+      --surface-2: rgba(15,20,30,.045);
+      --surface-3: rgba(15,20,30,.075);
+      --blue: #2563eb;
+      --blue-soft: #1a4fc4;
+      --green: #0f9250;
+      --input-bg: #ffffff;
+      --input-bg-focus: #ffffff;
+      --btn-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(15,20,30,.07);
+      --glow-1: rgba(91,157,255,.16);
+      --glow-2: rgba(167,139,250,.14);
+      --glow-3: rgba(61,220,132,.08);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--txt);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      background: var(--bg);
+      background-image:
+        radial-gradient(720px 420px at 12% -8%, var(--glow-1), transparent 70%),
+        radial-gradient(680px 400px at 92% -4%, var(--glow-2), transparent 68%),
+        radial-gradient(900px 520px at 50% 108%, var(--glow-3), transparent 72%);
+      background-attachment: fixed;
+    }
+
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 22px 18px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 0 20px;
+      margin-bottom: 20px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1 1 auto;
+    }
+
+    .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      font-size: 17px;
+      background: linear-gradient(150deg, #5b9dff, #a78bfa 62%, #f0555f 130%);
+      box-shadow: 0 6px 18px -6px rgba(91,157,255,.7), inset 0 1px 0 rgba(255,255,255,.35);
+      flex: 0 0 auto;
+    }
+
+    header h1 {
+      font-size: 17px;
+      margin: 0;
+      font-weight: 680;
+      letter-spacing: -0.024em;
+    }
+
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--dim);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logout-btn, .theme-toggle {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--dim);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      transition: background 0.18s, border-color 0.18s;
+    }
+
+    .logout-btn:hover, .theme-toggle:hover {
+      background: var(--surface-3);
+      border-color: var(--line-2);
+    }
+
+    .logout-btn:active, .theme-toggle:active {
+      transform: scale(0.94);
+    }
+
+    .theme-toggle svg, .logout-btn svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .theme-toggle .icon-sun { display: none; }
+    .theme-toggle .icon-moon { display: block; }
+    [data-theme="light"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      color: var(--txt);
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--dim);
+      margin-bottom: 28px;
+    }
+
+    .gym-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .gym-card {
+      padding: 20px;
+      border-radius: 13px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+      box-shadow: 0 1px 2px rgba(0,0,0,.35);
+      cursor: pointer;
+      transition: transform 0.22s, border-color 0.22s, box-shadow 0.22s;
+    }
+
+    .gym-card::before {
+      content: "";
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      top: 0;
+      height: 2px;
+      border-radius: 0 0 2px 2px;
+      background: #5b9dff;
+      opacity: 0.85;
+    }
+
+    .gym-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--line-2);
+      box-shadow: 0 6px 20px -6px rgba(0,0,0,.55);
+    }
+
+    .gym-card:active {
+      transform: translateY(0);
+    }
+
+    .gym-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      color: var(--txt);
+    }
+
+    .gym-location {
+      font-size: 13px;
+      color: var(--dim);
+      margin-bottom: 12px;
+    }
+
+    .gym-action {
+      font-size: 13px;
+      color: var(--blue);
+      font-weight: 500;
+    }
+
+    .create-gym-btn {
+      padding: 20px;
+      border-radius: 13px;
+      border: 2px dashed var(--line-2);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-align: center;
+      transition: border-color 0.18s, background 0.18s;
+      min-height: 140px;
+    }
+
+    .create-gym-btn:hover {
+      border-color: var(--blue);
+      background: rgba(91,157,255,.05);
+    }
+
+    .create-gym-btn-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--blue);
+    }
+
+    .create-gym-btn-icon {
+      font-size: 24px;
+      color: var(--blue);
+      opacity: 0.7;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4,6,10,.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      max-width: 420px;
+      width: 100%;
+      padding: 32px;
+      box-shadow: 0 26px 70px -18px rgba(0,0,0,.8);
+    }
+
+    .modal-content h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+    }
+
+    .modal-content p {
+      font-size: 13px;
+      color: var(--dim);
+      margin: 0 0 20px 0;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--txt);
+      font-size: 14px;
+      font-family: inherit;
+      transition: background 0.18s, border-color 0.18s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      background: var(--input-bg-focus);
+      border-color: var(--blue);
+    }
+
+    .modal-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .modal-btn {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--txt);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.18s, border-color 0.18s;
+    }
+
+    .modal-btn:hover {
+      background: var(--surface-3);
+    }
+
+    .modal-btn.primary {
+      background: linear-gradient(150deg, var(--blue), #a78bfa);
+      border-color: transparent;
+      color: white;
+    }
+
+    .modal-btn.primary:hover {
+      opacity: 0.9;
+    }
+
+    .error-message {
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(240,85,95,.12);
+      border: 1px solid rgba(240,85,95,.32);
+      color: #ff8a92;
+      font-size: 12px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .loading-msg {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--dim);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--line-2);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="header-left">
+        <div class="logo">📊</div>
+        <h1>Renewal Radar</h1>
+      </div>
+      <div class="header-user" id="headerUser"></div>
+      <div class="header-right">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button class="logout-btn" id="logoutBtn" title="Logout">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <h2 class="page-title">Your Gyms</h2>
+    <p class="page-subtitle">Select a gym to manage members or create a new one</p>
+
+    <div id="content">
+      <div class="loading-msg">
+        <div class="spinner"></div>
+        <p>Loading gyms...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Gym Modal -->
+  <div class="modal-overlay" id="createGymModal">
+    <div class="modal-content">
+      <h2>Create New Gym</h2>
+      <p>Add a new gym to manage members</p>
+
+      <div id="createGymError" class="error-message"></div>
+
+      <div class="form-group">
+        <label for="gymName">Gym Name *</label>
+        <input type="text" id="gymName" placeholder="e.g., FitXpress" required>
+      </div>
+      <div class="form-group">
+        <label for="gymLocation">Location</label>
+        <input type="text" id="gymLocation" placeholder="e.g., Downtown">
+      </div>
+
+      <div class="modal-buttons">
+        <button class="modal-btn" onclick="closeCreateGymModal()">Cancel</button>
+        <button class="modal-btn primary" onclick="submitCreateGym()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="frontend.js"></script>
+  <script>
+    let isLoading = true;
+
+    function setupTheme() {
+      let theme = localStorage.getItem('rr_theme');
+      if (!theme) {
+        theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+      document.documentElement.setAttribute('data-theme', theme);
+
+      document.getElementById('themeToggle').addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('rr_theme', next);
+      });
+    }
+
+    async function init() {
+      if (!api.token) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      try {
+        const user = await api.getCurrentUser();
+        document.getElementById('headerUser').innerHTML = `👤 ${user.firstName} ${user.lastName || ''}`.trim();
+
+        await loadGyms();
+      } catch (err) {
+        console.error('Error initializing:', err);
+        api.clearToken();
+        window.location.href = '/login.html';
+      }
+    }
+
+    async function loadGyms() {
+      isLoading = true;
+      try {
+        const gyms = await api.getGyms();
+        renderGyms(gyms);
+      } catch (err) {
+        document.getElementById('content').innerHTML = `<p class="loading-msg">Error loading gyms: ${err.message}</p>`;
+      } finally {
+        isLoading = false;
+      }
+    }
+
+    function renderGyms(gyms) {
+      if (gyms.length === 0) {
+        document.getElementById('content').innerHTML = `
+          <div style="text-align: center; padding: 40px 20px;">
+            <p style="color: var(--dim); margin-bottom: 20px;">No gyms yet. Create one to get started!</p>
+            <button class="create-gym-btn" onclick="openCreateGymModal()">
+              <div class="create-gym-btn-icon">➕</div>
+              <div class="create-gym-btn-text">Create Your First Gym</div>
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const gymCardsHtml = gyms.map(gym => `
+        <div class="gym-card" onclick="selectGym(${gym.id})">
+          <h3 class="gym-name">${escapeHtml(gym.name)}</h3>
+          <p class="gym-location">${gym.location ? escapeHtml(gym.location) : 'No location set'}</p>
+          <div class="gym-action">Open →</div>
+        </div>
+      `).join('');
+
+      const createCardHtml = `
+        <button class="gym-card create-gym-btn" onclick="openCreateGymModal()">
+          <div class="create-gym-btn-icon">➕</div>
+          <div class="create-gym-btn-text">Add Gym</div>
+        </button>
+      `;
+
+      document.getElementById('content').innerHTML = `
+        <div class="gym-grid">
+          ${gymCardsHtml}
+          ${createCardHtml}
+        </div>
+      `;
+    }
+
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    async function selectGym(gymId) {
+      try {
+        localStorage.setItem('rr_selectedGym', gymId);
+        window.location.href = '/index.html';
+      } catch (err) {
+        alert('Error selecting gym: ' + err.message);
+      }
+    }
+
+    function openCreateGymModal() {
+      document.getElementById('createGymModal').classList.add('open');
+      document.getElementById('gymName').focus();
+    }
+
+    function closeCreateGymModal() {
+      document.getElementById('createGymModal').classList.remove('open');
+      document.getElementById('gymName').value = '';
+      document.getElementById('gymLocation').value = '';
+      document.getElementById('createGymError').classList.remove('show');
+    }
+
+    async function submitCreateGym() {
+      const name = document.getElementById('gymName').value.trim();
+      const location = document.getElementById('gymLocation').value.trim();
+      const errorEl = document.getElementById('createGymError');
+
+      errorEl.classList.remove('show');
+
+      if (!name) {
+        errorEl.textContent = 'Gym name is required';
+        errorEl.classList.add('show');
+        return;
+      }
+
+      try {
+        await api.createGym(name, location);
+        closeCreateGymModal();
+        await loadGyms();
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.classList.add('show');
+      }
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (confirm('Are you sure you want to log out?')) {
+        api.clearToken();
+        window.location.href = '/login.html';
+      }
+    });
+
+    // Handle Enter key in create gym form
+    document.getElementById('gymName').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') submitCreateGym();
+    });
+
+    setupTheme();
+    init();
+  </script>
+</body>
+</html>

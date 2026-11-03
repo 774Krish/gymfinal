@@ -267,6 +267,25 @@
   [data-theme="light"] .themebtn .i-sun{display:block}
   [data-theme="light"] .themebtn .i-moon{display:none}
 
+  /* ---------------- back to gyms ---------------- */
+  .backbtn{
+    height:38px;flex:0 0 auto;
+    display:flex;align-items:center;gap:7px;
+    padding:0 13px;
+    border-radius:11px;
+    border:1px solid var(--line);
+    background:var(--surface-2);
+    color:var(--dim);
+    font-family:inherit;font-size:13.5px;font-weight:600;
+    cursor:pointer;
+    box-shadow:var(--btn-shadow);
+    transition:background .18s var(--ease), color .18s var(--ease),
+               border-color .18s var(--ease), transform .14s var(--ease);
+  }
+  .backbtn:hover{color:var(--txt);border-color:var(--line-2);background:var(--surface-3)}
+  .backbtn:active{transform:scale(.96)}
+  .backbtn svg{width:16px;height:16px;flex:0 0 auto}
+
   /* ---------------- stats ---------------- */
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:20px}
   .stat{
@@ -808,6 +827,7 @@
     }
   }
 </style>
+<script src="frontend.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -827,6 +847,13 @@
         </button>
       </div>
     </div>
+    <button class="backbtn" id="backBtn" type="button" title="Back to gyms">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+      <span>Gyms</span>
+    </button>
     <button class="themebtn" id="themeBtn" type="button" aria-label="Switch theme" title="Switch theme">
       <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -983,6 +1010,15 @@ function load(){
 }
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  
+  // If using backend, sync the gym data
+  if (isUsingBackend && currentGymId) {
+    try {
+      api.updateGym(currentGymId, state.gym, state.place);
+    } catch (err) {
+      console.error('Failed to sync gym changes to backend:', err);
+    }
+  }
 }
 function clearDemo(){ try{ localStorage.removeItem(KEY); }catch(e){} }
 
@@ -1041,7 +1077,112 @@ function seed(){
   return out;
 }
 
+// Backend integration check
+(function() {
+  if (!localStorage.getItem('rr_token')) {
+    window.location.href = '/login.html';
+    return;
+  }
+})();
+
 let state = load();
+let isUsingBackend = !!localStorage.getItem('rr_token');
+let currentGymId = localStorage.getItem('rr_selectedGym');
+
+// In backend mode the demo dataset must never show. Start empty and load the
+// selected gym's real data from the server instead.
+if (isUsingBackend && currentGymId) {
+  state = { gym: "", place: "", members: [], renewals: [] };
+}
+
+// Backend sync functions
+async function syncMembersToBackend() {
+  if (!isUsingBackend || !currentGymId) return;
+  try {
+    const members = await api.getMembers(currentGymId);
+    return members;
+  } catch (err) {
+    console.error('Failed to sync members:', err);
+  }
+}
+
+async function syncMemberChanges(member) {
+  if (!isUsingBackend || !currentGymId) return;
+  try {
+    // Transform member object to backend format
+    const updates = {
+      name: member.name,
+      phone: member.phone,
+      plan: member.plan,
+      renewalDate: member.expiry,
+      ptSessions: member.pt,
+      ptSessionsRemaining: member.ptLeft,
+      notes: member.note,
+      status: member.status
+    };
+    await api.updateMember(currentGymId, member.id, updates);
+  } catch (err) {
+    console.error('Failed to sync member changes:', err);
+  }
+}
+
+async function addMemberToBackend(member) {
+  if (!isUsingBackend || !currentGymId) return;
+  try {
+    const data = {
+      name: member.name,
+      phone: member.phone,
+      plan: member.plan,
+      renewalDate: member.expiry,
+      ptSessions: member.pt,
+      ptSessionsRemaining: member.ptLeft,
+      notes: member.note
+    };
+    const result = await api.addMember(currentGymId, data);
+    member.id = result.id;
+    return result;
+  } catch (err) {
+    console.error('Failed to add member to backend:', err);
+  }
+}
+
+async function deleteMemberFromBackend(memberId) {
+  if (!isUsingBackend || !currentGymId) return;
+  try {
+    await api.deleteMember(currentGymId, memberId);
+  } catch (err) {
+    console.error('Failed to delete member from backend:', err);
+  }
+}
+
+async function loadBackendGymData() {
+  if (!isUsingBackend || !currentGymId) return;
+  try {
+    const gymData = await api.exportGymData(currentGymId);
+    if (gymData.gym) {
+      state.gym = gymData.gym.name;
+      state.place = gymData.gym.location || '';
+    }
+    // Always take the server's member list — an empty gym should be empty,
+    // not the prototype demo members.
+    state.members = (gymData.members || []).map(m => ({
+      id: m.id,
+      name: m.name,
+      phone: m.phone,
+      plan: m.plan,
+      expiry: m.renewalDate,
+      pt: m.ptSessions || 0,
+      ptLeft: m.ptSessionsRemaining || 0,
+      lastReminded: m.lastRemindedDate || null,
+      status: m.status || 'active',
+      flagged: false,
+      note: m.notes || ''
+    }));
+  } catch (err) {
+    console.error('Failed to load gym data from backend:', err);
+    toast('Warning: Could not load data from server. Using local cache.', true);
+  }
+}
 
 /* ---------- helpers ---------- */
 const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
@@ -1144,7 +1285,7 @@ function render(){
   document.getElementById("t-renewed").textContent = t("renewed");
   document.getElementById("t-pt").textContent = t("pt");
   document.getElementById("s-pt-sub").textContent = t("ptSub");
-  document.getElementById("t-demo").textContent = t("demo");
+  document.getElementById("t-demo").textContent = isUsingBackend ? "Synced to your account" : t("demo");
   document.getElementById("reset").textContent = t("reset");
   document.getElementById("addOpen").textContent = t("addOpen");
   document.getElementById("searchbar").classList.toggle("has", !!query);
@@ -1384,16 +1525,35 @@ function openEditor(mode, id){
     const ptLeft= Math.min(pt, Math.max(0, parseInt(document.getElementById("m-ptleft").value || "0", 10)));
 
     if (!editing){
-      state.members.push({
+      const newMember = {
         id: uid(), name, phone, plan,
         expiry: iso(addDays(new Date(date+"T00:00:00"), PLANS[plan].days)),
         pt, ptLeft, lastReminded: null, status: "active", flagged: false, note: ""
-      });
+      };
+      state.members.push(newMember);
+      
+      // Sync to backend
+      if (isUsingBackend && currentGymId) {
+        addMemberToBackend(newMember).catch(err => {
+          console.error('Failed to sync new member to backend:', err);
+          toast('Note: Member added locally but not synced to server', true);
+        });
+      }
+      
       toast(`${name.split(" ")[0]} added`);
     } else {
       m.name = name; m.phone = phone; m.plan = plan;
       m.expiry = date; m.pt = pt; m.ptLeft = ptLeft;
       if (dLeft(m) >= 0) m.lastReminded = null;   // renewal resets reminder history
+      
+      // Sync to backend
+      if (isUsingBackend && currentGymId) {
+        syncMemberChanges(m).catch(err => {
+          console.error('Failed to sync changes to backend:', err);
+          toast('Note: Changes saved locally but not synced to server', true);
+        });
+      }
+      
       toast("Changes saved");
     }
     closeModal(); render();
@@ -1588,6 +1748,15 @@ document.getElementById("list").addEventListener("click", e => {
     const m = state.members.find(x => x.id === lf.dataset.left);
     if (!confirm(`Mark ${m.name} as left the gym?\n\nThey will stop appearing in your lists and won't count towards money at risk.`)) return;
     m.status = "left";
+    
+    // Sync status change to backend
+    if (isUsingBackend && currentGymId) {
+      syncMemberChanges(m).catch(err => {
+        console.error('Failed to sync status change to backend:', err);
+        toast('Note: Status changed locally but not synced to server', true);
+      });
+    }
+    
     save(); render();
     toast(`${m.name.split(" ")[0]} marked as left`);
     return;
@@ -1596,6 +1765,15 @@ document.getElementById("list").addEventListener("click", e => {
   if (rc){
     const m = state.members.find(x => x.id === rc.dataset.reactivate);
     m.status = "active";
+    
+    // Sync status change to backend
+    if (isUsingBackend && currentGymId) {
+      syncMemberChanges(m).catch(err => {
+        console.error('Failed to sync reactivation to backend:', err);
+        toast('Note: Member reactivated locally but not synced to server', true);
+      });
+    }
+    
     save(); render();
     toast(`${m.name.split(" ")[0]} reactivated`);
     return;
@@ -1605,6 +1783,15 @@ document.getElementById("list").addEventListener("click", e => {
     const m = state.members.find(x => x.id === dl.dataset.del);
     if (!confirm(`Delete ${m.name} permanently?\n\nThis cannot be undone. Use "Mark as left" if they might come back.`)) return;
     state.members = state.members.filter(x => x.id !== m.id);
+    
+    // Sync deletion to backend
+    if (isUsingBackend && currentGymId) {
+      deleteMemberFromBackend(m.id).catch(err => {
+        console.error('Failed to delete member from backend:', err);
+        toast('Note: Member deleted locally but not synced to server', true);
+      });
+    }
+    
     save(); render();
     toast(`${m.name.split(" ")[0]} deleted`);
     return;
@@ -1629,12 +1816,31 @@ document.getElementById("sortBtn").onclick = () => {
 document.getElementById("addOpen").onclick    = () => openEditor("add");
 document.getElementById("importOpen").onclick = openImport;
 document.getElementById("gymBtn").onclick     = openGymEditor;
-document.getElementById("reset").onclick = () => {
-  if (!confirm("Reset demo data?")) return;
-  clearDemo(); state = seed(); query = ""; searchEl.value = ""; tab = "action"; render();
-};
+document.getElementById("backBtn").onclick    = () => { window.location.href = '/gym-select.html'; };
 
-render();
+// Update reset button based on mode
+const resetBtn = document.getElementById("reset");
+if (isUsingBackend) {
+  resetBtn.style.display = 'none'; // Don't show reset for backend users
+  resetBtn.onclick = () => {};
+} else {
+  resetBtn.onclick = () => {
+    if (!confirm("Reset demo data?")) return;
+    clearDemo(); state = seed(); query = ""; searchEl.value = ""; tab = "action"; render();
+  };
+}
+
+// Load backend data if available
+if (isUsingBackend && currentGymId) {
+  loadBackendGymData().then(() => {
+    render();
+  }).catch(err => {
+    console.error('Error loading backend data:', err);
+    render();
+  });
+} else {
+  render();
+}
 </script>
 </body>
 </html>
