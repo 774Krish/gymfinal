@@ -4,6 +4,7 @@ const path = require('path');
 require('dotenv').config();
 
 const { initializeDB, migrateUsersTable } = require('./db');
+const { seedDemoUser } = require('./seed');
 const routes = require('./routes');
 
 const app = express();
@@ -48,6 +49,7 @@ app.use((err, req, res, next) => {
 // Initialize database and start server
 initializeDB()
   .then(() => migrateUsersTable())
+  .then(() => seedDemoUser())
   .then(() => {
     console.log('Database initialized');
     app.listen(PORT, () => {
