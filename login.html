@@ -222,6 +222,12 @@
       display: block;
     }
 
+    .error-message.success {
+      background: rgba(61,220,132,.12);
+      border-color: rgba(61,220,132,.32);
+      color: #7ceea9;
+    }
+
     .theme-toggle {
       position: fixed;
       top: 20px;
@@ -384,6 +390,7 @@
       const errorEl = document.getElementById(fieldId);
       errorEl.textContent = '';
       errorEl.classList.remove('show');
+      errorEl.classList.remove('success');
     }
 
     async function handleLogin(event) {
@@ -425,7 +432,10 @@
         
         if (result.needsVerification) {
           // Account is created and login works immediately — email verification is optional.
-          document.querySelector('#signupError').innerHTML = `✅ Account created — you can log in now. <a href="/verify-email.html?token=${result.verificationToken}" style="color: #9cc4ff; text-decoration: underline; cursor: pointer;">Verify email</a>`;
+          const signupError = document.querySelector('#signupError');
+          signupError.innerHTML = `✅ Account created — you can log in now. <a href="/verify-email.html?token=${result.verificationToken}" style="color: #7ceea9; text-decoration: underline; cursor: pointer;">Verify email</a>`;
+          signupError.classList.add('show');
+          signupError.classList.add('success');
           // Clear form
           document.getElementById('signupFormElement').reset();
           btn.disabled = false;
