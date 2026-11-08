@@ -15,6 +15,12 @@ function isValidEmail(email) {
   return EMAIL_REGEX.test(email) && email.length <= 255;
 }
 
+// Only allow real Gmail addresses (blocks test@example.com etc.)
+function isGmailEmail(email) {
+  const normalized = email.toLowerCase().trim();
+  return /^[a-z0-9._%+-]+@gmail\.com$/.test(normalized);
+}
+
 // Generate verification token
 function generateVerificationToken() {
   return Math.random().toString(36).substr(2, 32) + Math.random().toString(36).substr(2, 32);
@@ -81,6 +87,11 @@ async function signup(email, password, firstName, lastName) {
     // Validate email format
     if (!email || !isValidEmail(email)) {
       throw new Error('Please enter a valid email address');
+    }
+
+    // Require a real Gmail address
+    if (!isGmailEmail(email)) {
+      throw new Error('Please sign up with a Gmail address (@gmail.com)');
     }
 
     const normalizedEmail = email.toLowerCase().trim();
