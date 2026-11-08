@@ -20,11 +20,10 @@ function generateVerificationToken() {
   return Math.random().toString(36).substr(2, 32) + Math.random().toString(36).substr(2, 32);
 }
 
-// Generate token expiry (24 hours from now)
+// Generate token expiry (24 hours from now, SQLite datetime-compatible)
 function getVerificationTokenExpiry() {
-  const now = new Date();
-  now.setHours(now.getHours() + 24);
-  return now.toISOString();
+  const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 // Generate reset token expiry (1 hour from now, SQLite datetime-compatible)
@@ -145,7 +144,7 @@ async function signup(email, password, firstName, lastName) {
 async function verifyEmail(verificationToken) {
   try {
     const user = await dbGet(
-      'SELECT * FROM users WHERE verificationToken = ? AND verificationTokenExpiry > datetime("now")',
+      'SELECT * FROM users WHERE verificationToken = ? AND verificationTokenExpiry > datetime(\'now\')',
       [verificationToken]
     );
 
@@ -270,7 +269,7 @@ async function resetPassword(token, newPassword) {
     }
 
     const user = await dbGet(
-      'SELECT * FROM users WHERE resetToken = ? AND resetTokenExpiry > datetime("now")',
+      'SELECT * FROM users WHERE resetToken = ? AND resetTokenExpiry > datetime(\'now\')',
       [token]
     );
 
