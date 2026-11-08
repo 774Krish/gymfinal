@@ -429,6 +429,8 @@
           document.querySelector('#signupError').innerHTML = `✅ Account created! Check your email for a verification link or <a href="/verify-email.html?token=${result.verificationToken}" style="color: #9cc4ff; text-decoration: underline; cursor: pointer;">verify now</a>`;
           // Clear form
           document.getElementById('signupFormElement').reset();
+          btn.disabled = false;
+          btn.classList.remove('loading');
         } else {
           window.location.href = '/gym-select.html';
         }

@@ -114,14 +114,16 @@ async function signup(email, password, firstName, lastName) {
       [normalizedEmail, hashedPassword, firstName.trim(), lastName ? lastName.trim() : '', verificationToken, verificationTokenExpiry, 0]
     );
 
-    // Send verification email
-    await sendVerificationEmail(normalizedEmail, verificationToken, firstName.trim());
+    // Send verification email in the background — never block signup on SMTP.
+    sendVerificationEmail(normalizedEmail, verificationToken, firstName.trim())
+      .catch(err => console.error('Verification email send failed:', err.message));
 
     return {
       success: true,
       needsVerification: true,
       userId: result.lastID,
       email: normalizedEmail,
+      verificationToken,
       message: 'Account created! Check your email for verification link.',
       user: {
         id: result.lastID,
@@ -191,10 +193,8 @@ async function login(email, password) {
       throw new Error('Email or password is incorrect');
     }
 
-    // Check if email is verified
-    if (!user.emailVerified) {
-      throw new Error('Please verify your email before logging in. Check your email for the verification link.');
-    }
+    // Allow login even if email isn't verified yet (keeps the demo friction-free).
+    // Verification still works via /auth/verify-email, but is not a hard gate.
 
     const isPasswordValid = await verifyPassword(password, user.password);
     if (!isPasswordValid) {

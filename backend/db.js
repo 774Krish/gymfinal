@@ -1,108 +1,87 @@
-const sqlite3 = require('sqlite3').verbose();
+const { createClient } = require('@libsql/client');
 const path = require('path');
 require('dotenv').config();
 
-const DB_PATH = process.env.DB_PATH || './renewal-radar.db';
-const db = new sqlite3.Database(DB_PATH);
+// Use Turso (libSQL) when TURSO_DATABASE_URL is set; otherwise fall back to a
+// local SQLite file so local dev works with zero cloud setup.
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL || `file:${path.join(__dirname, 'renewal-radar.db')}`,
+  authToken: process.env.TURSO_AUTH_TOKEN || undefined,
+});
 
-// Enable foreign keys
-db.run('PRAGMA foreign_keys = ON');
+// Backwards-compatible export name (kept in case other modules import `db`).
+const db = client;
 
 // Initialize database schema
-function initializeDB() {
-  return new Promise((resolve, reject) => {
-    db.serialize(() => {
-      // Users table
-      db.run(`
-        CREATE TABLE IF NOT EXISTS users (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          email TEXT UNIQUE NOT NULL,
-          password TEXT NOT NULL,
-          firstName TEXT NOT NULL,
-          lastName TEXT,
-          emailVerified BOOLEAN DEFAULT 0,
-          verificationToken TEXT,
-          verificationTokenExpiry DATETIME,
-          resetToken TEXT,
-          resetTokenExpiry DATETIME,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `, (err) => {
-        if (err) reject(err);
-      });
+async function initializeDB() {
+  // Enable foreign keys for local file DBs (Turso enforces them by default).
+  try { await client.execute('PRAGMA foreign_keys = ON'); } catch (_) { /* ignored on Turso */ }
 
-      // Gyms table
-      db.run(`
-        CREATE TABLE IF NOT EXISTS gyms (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          ownerId INTEGER NOT NULL,
-          name TEXT NOT NULL,
-          location TEXT,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(ownerId) REFERENCES users(id) ON DELETE CASCADE
-        )
-      `, (err) => {
-        if (err) reject(err);
-      });
+  const schema = [
+    `CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      firstName TEXT NOT NULL,
+      lastName TEXT,
+      emailVerified BOOLEAN DEFAULT 0,
+      verificationToken TEXT,
+      verificationTokenExpiry DATETIME,
+      resetToken TEXT,
+      resetTokenExpiry DATETIME,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS gyms (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ownerId INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      location TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(ownerId) REFERENCES users(id) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS members (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      gymId INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      phone TEXT,
+      email TEXT,
+      plan TEXT,
+      startDate DATE,
+      renewalDate DATE,
+      lastRenewalDate DATE,
+      status TEXT DEFAULT 'active',
+      ptSessions INTEGER DEFAULT 0,
+      ptSessionsRemaining INTEGER DEFAULT 0,
+      notes TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(gymId) REFERENCES gyms(id) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS user_gyms (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER NOT NULL,
+      gymId INTEGER NOT NULL,
+      role TEXT DEFAULT 'owner',
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(userId, gymId),
+      FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY(gymId) REFERENCES gyms(id) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS activity_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      gymId INTEGER NOT NULL,
+      memberId INTEGER,
+      action TEXT,
+      details TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(gymId) REFERENCES gyms(id) ON DELETE CASCADE,
+      FOREIGN KEY(memberId) REFERENCES members(id) ON DELETE SET NULL
+    )`
+  ];
 
-      // Members table
-      db.run(`
-        CREATE TABLE IF NOT EXISTS members (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          gymId INTEGER NOT NULL,
-          name TEXT NOT NULL,
-          phone TEXT,
-          email TEXT,
-          plan TEXT,
-          startDate DATE,
-          renewalDate DATE,
-          lastRenewalDate DATE,
-          status TEXT DEFAULT 'active',
-          ptSessions INTEGER DEFAULT 0,
-          ptSessionsRemaining INTEGER DEFAULT 0,
-          notes TEXT,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(gymId) REFERENCES gyms(id) ON DELETE CASCADE
-        )
-      `, (err) => {
-        if (err) reject(err);
-      });
-
-      // User Gyms Relationship (for multiple gym access if needed later)
-      db.run(`
-        CREATE TABLE IF NOT EXISTS user_gyms (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          userId INTEGER NOT NULL,
-          gymId INTEGER NOT NULL,
-          role TEXT DEFAULT 'owner',
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          UNIQUE(userId, gymId),
-          FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE,
-          FOREIGN KEY(gymId) REFERENCES gyms(id) ON DELETE CASCADE
-        )
-      `, (err) => {
-        if (err) reject(err);
-      });
-
-      // Activity log table for audit trail
-      db.run(`
-        CREATE TABLE IF NOT EXISTS activity_log (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          gymId INTEGER NOT NULL,
-          memberId INTEGER,
-          action TEXT,
-          details TEXT,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(gymId) REFERENCES gyms(id) ON DELETE CASCADE,
-          FOREIGN KEY(memberId) REFERENCES members(id) ON DELETE SET NULL
-        )
-      `, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-  });
+  for (const sql of schema) {
+    await client.execute(sql);
+  }
 }
 
 // Add columns that may be missing on databases created before a feature was added
@@ -119,32 +98,25 @@ async function migrateUsersTable() {
   }
 }
 
-// Helper functions to promisify database operations
-function dbRun(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
-      if (err) reject(err);
-      else resolve(this);
-    });
-  });
+// Helper functions to run queries against libSQL/Turso.
+// dbRun returns a sqlite3-like object (lastID, changes) for compatibility.
+async function dbRun(sql, params = []) {
+  const result = await client.execute({ sql, args: params });
+  return {
+    lastID: Number(result.lastInsertRowid ?? 0),
+    changes: Number(result.rowsAffected ?? 0),
+    result
+  };
 }
 
-function dbGet(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
+async function dbGet(sql, params = []) {
+  const result = await client.execute({ sql, args: params });
+  return result.rows[0] ?? null;
 }
 
-function dbAll(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows || []);
-    });
-  });
+async function dbAll(sql, params = []) {
+  const result = await client.execute({ sql, args: params });
+  return result.rows ?? [];
 }
 
 module.exports = {

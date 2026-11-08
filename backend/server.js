@@ -15,6 +15,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Never serve backend internals or dotfiles (like .env) as static assets
+app.use((req, res, next) => {
+  const decoded = decodeURIComponent(req.path);
+  const segments = decoded.split('/');
+  if (decoded.startsWith('/backend') || segments.some(seg => seg.startsWith('.'))) {
+    return res.status(404).send('Not found');
+  }
+  next();
+});
+
 // Serve static files from frontend if they exist
 app.use(express.static(path.join(__dirname, '../')));
 

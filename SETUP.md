@@ -123,16 +123,30 @@ gym-renewal-radar/
 
 ## Environment Variables
 
-The backend uses `.env` file for configuration:
+The backend uses a `.env` file for configuration. Copy `backend/.env.example` to `backend/.env` and fill in the values.
 
 ```env
 PORT=5000                          # Server port
-NODE_ENV=development               # Environment (development/production)
+NODE_ENV=production                # Environment (development/production)
 JWT_SECRET=your-secret-key         # Secret for JWT signing (change in production!)
-DB_PATH=./renewal-radar.db         # Database file location
+TURSO_DATABASE_URL=libsql://...    # Turso DB URL (production persistence)
+TURSO_AUTH_TOKEN=your-token        # Turso auth token
+FRONTEND_URL=https://your.app      # Base URL for email links
+EMAIL_HOST=smtp.mailtrap.io        # SMTP host
+EMAIL_PORT=587                     # SMTP port
+EMAIL_SECURE=false                 # true for port 465
+EMAIL_USER=your-user               # SMTP username
+EMAIL_PASSWORD=your-password       # SMTP password
+DEMO_EMAIL=demo@renewalradar.com   # Seeded demo account
+DEMO_PASSWORD=Demo12345            # Seeded demo password
 ```
 
-**Important**: For production, change `JWT_SECRET` to a strong random string.
+**Important**: For production, set a strong random `JWT_SECRET`.
+
+### Database (Turso / libSQL)
+
+- **Production (recommended):** set `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` (from [Turso](https://turso.tech)). Data then persists across restarts and redeploys.
+- **Local dev:** leave both unset and the app falls back to a local `backend/renewal-radar.db` file automatically — no cloud setup needed.
 
 ## API Endpoints
 
