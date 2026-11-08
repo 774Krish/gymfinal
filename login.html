@@ -424,9 +424,8 @@
         const result = await api.signup(email, password, firstName, lastName);
         
         if (result.needsVerification) {
-          // Show verification info
-          showError('signupError', `✅ Account created! Check your email for a verification link or go to <a href="/verify-email.html?token=${result.verificationToken}" style="color: inherit; text-decoration: underline;">verify email</a>`);
-          document.querySelector('#signupError').innerHTML = `✅ Account created! Check your email for a verification link or <a href="/verify-email.html?token=${result.verificationToken}" style="color: #9cc4ff; text-decoration: underline; cursor: pointer;">verify now</a>`;
+          // Account is created and login works immediately — email verification is optional.
+          document.querySelector('#signupError').innerHTML = `✅ Account created — you can log in now. <a href="/verify-email.html?token=${result.verificationToken}" style="color: #9cc4ff; text-decoration: underline; cursor: pointer;">Verify email</a>`;
           // Clear form
           document.getElementById('signupFormElement').reset();
           btn.disabled = false;

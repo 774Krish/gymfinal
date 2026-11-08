@@ -121,6 +121,32 @@ router.get('/auth/me', authMiddleware, async (req, res) => {
   }
 });
 
+// Delete current user's account (and all their data)
+router.delete('/auth/me', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    // Explicitly clean up related rows so it works even if FK cascades are off.
+    const gyms = await dbAll('SELECT id FROM gyms WHERE ownerId = ?', [userId]);
+    const gymIds = gyms.map(g => g.id);
+
+    if (gymIds.length > 0) {
+      const placeholders = gymIds.map(() => '?').join(', ');
+      await dbRun(`DELETE FROM members WHERE gymId IN (${placeholders})`, gymIds);
+      await dbRun(`DELETE FROM activity_log WHERE gymId IN (${placeholders})`, gymIds);
+      await dbRun(`DELETE FROM user_gyms WHERE gymId IN (${placeholders})`, gymIds);
+      await dbRun('DELETE FROM gyms WHERE ownerId = ?', [userId]);
+    }
+
+    await dbRun('DELETE FROM user_gyms WHERE userId = ?', [userId]);
+    await dbRun('DELETE FROM users WHERE id = ?', [userId]);
+
+    res.json({ success: true, message: 'Account deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============ GYMS ============
 
 // Create gym

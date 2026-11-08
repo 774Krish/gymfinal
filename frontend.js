@@ -124,6 +124,10 @@ class RenewalRadarAPI {
     return this.makeRequest('/auth/me', { method: 'GET' });
   }
 
+  async deleteAccount() {
+    return this.makeRequest('/auth/me', { method: 'DELETE' });
+  }
+
   // Gyms
   async createGym(name, location = '') {
     return this.makeRequest('/gyms', {

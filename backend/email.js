@@ -8,7 +8,8 @@ const transporter = nodemailer.createTransport({
   secure: process.env.EMAIL_SECURE === 'true',
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
+    // Gmail shows app passwords with spaces for readability; strip them.
+    pass: (process.env.EMAIL_PASSWORD || '').replace(/\s+/g, ''),
   },
   // Fail fast instead of hanging the request if SMTP is unreachable/slow.
   connectionTimeout: 10000,
