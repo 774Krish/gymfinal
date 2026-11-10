@@ -50,7 +50,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files from public/. On Vercel these are served by the CDN
+// Serve static assets (frontend.js). On Vercel these are served by the CDN
 // instead; this static middleware only matters for local development.
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -62,10 +62,32 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// 404 handler
+// Clean-URL page routes (no .html suffix)
+const VIEWS = path.join(__dirname, '../views');
+app.get('/login',         (req, res) => res.sendFile(path.join(VIEWS, 'login.html')));
+app.get('/gym-select',    (req, res) => res.sendFile(path.join(VIEWS, 'gym-select.html')));
+app.get('/verify-email',  (req, res) => res.sendFile(path.join(VIEWS, 'verify-email.html')));
+app.get('/reset-password',(req, res) => res.sendFile(path.join(VIEWS, 'reset-password.html')));
+app.get('/',              (req, res) => res.sendFile(path.join(VIEWS, 'index.html')));
+
+// Redirect legacy .html URLs to their clean equivalents (preserve query string)
+const legacyRedirects = {
+  '/index.html': '/',
+  '/login.html': '/login',
+  '/gym-select.html': '/gym-select',
+  '/verify-email.html': '/verify-email',
+  '/reset-password.html': '/reset-password'
+};
+app.get(Object.keys(legacyRedirects), (req, res) => {
+  const target = legacyRedirects[req.path];
+  const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+  res.redirect(301, target + qs);
+});
+
+// 404 handler — non-API paths fall back to the SPA shell
 app.use((req, res) => {
   if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+    res.sendFile(path.join(VIEWS, 'index.html'));
   } else {
     res.status(404).json({ error: 'Not found' });
   }

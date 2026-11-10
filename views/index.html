@@ -1080,7 +1080,7 @@ function seed(){
 // Backend integration check
 (function() {
   if (!localStorage.getItem('rr_token')) {
-    window.location.href = '/login.html';
+    window.location.href = '/login';
     return;
   }
 })();
@@ -1816,7 +1816,7 @@ document.getElementById("sortBtn").onclick = () => {
 document.getElementById("addOpen").onclick    = () => openEditor("add");
 document.getElementById("importOpen").onclick = openImport;
 document.getElementById("gymBtn").onclick     = openGymEditor;
-document.getElementById("backBtn").onclick    = () => { window.location.href = '/gym-select.html'; };
+document.getElementById("backBtn").onclick    = () => { window.location.href = '/gym-select'; };
 
 // Update reset button based on mode
 const resetBtn = document.getElementById("reset");

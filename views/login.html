@@ -19,6 +19,12 @@
       --blue: #5b9dff;
       --blue-soft: #9cc4ff;
       --red: #f0555f;
+      --danger-text: #ffa3a8;
+      --danger-bg: rgba(240,85,95,.16);
+      --danger-line: rgba(240,85,95,.45);
+      --success-text: #8fffc4;
+      --success-bg: rgba(61,220,132,.16);
+      --success-line: rgba(61,220,132,.45);
       --input-bg: rgba(0,0,0,.28);
       --input-bg-focus: rgba(0,0,0,.36);
       --btn-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 1px 2px rgba(0,0,0,.25);
@@ -40,6 +46,12 @@
       --blue: #2563eb;
       --blue-soft: #1a4fc4;
       --red: #d92d3a;
+      --danger-text: #b91c1c;
+      --danger-bg: rgba(185,28,28,.08);
+      --danger-line: rgba(185,28,28,.30);
+      --success-text: #067647;
+      --success-bg: rgba(6,118,71,.10);
+      --success-line: rgba(6,118,71,.30);
       --input-bg: #ffffff;
       --input-bg-focus: #ffffff;
       --btn-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(15,20,30,.07);
@@ -210,9 +222,9 @@
     .error-message {
       padding: 12px;
       border-radius: 8px;
-      background: rgba(240,85,95,.12);
-      border: 1px solid rgba(240,85,95,.32);
-      color: #ff8a92;
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-line);
+      color: var(--danger-text);
       font-size: 13px;
       margin-bottom: 16px;
       display: none;
@@ -223,9 +235,9 @@
     }
 
     .error-message.success {
-      background: rgba(61,220,132,.12);
-      border-color: rgba(61,220,132,.32);
-      color: #7ceea9;
+      background: var(--success-bg);
+      border-color: var(--success-line);
+      color: var(--success-text);
     }
 
     .theme-toggle {
@@ -345,7 +357,7 @@
         <div class="auth-subtitle">Enter your email and we'll send you a reset link</div>
 
         <div id="forgotError" class="error-message"></div>
-        <div id="forgotSuccess" class="error-message" style="background: rgba(61,220,132,.12); border-color: rgba(61,220,132,.32); color: #7ceea9;"></div>
+        <div id="forgotSuccess" class="error-message success"></div>
 
         <form id="forgotFormElement" onsubmit="handleForgotPassword(event)">
           <div class="form-group">
@@ -406,7 +418,7 @@
 
       try {
         await api.login(email, password);
-        window.location.href = '/gym-select.html';
+        window.location.href = '/gym-select';
       } catch (err) {
         showError('loginError', err.message);
         btn.disabled = false;
@@ -433,7 +445,7 @@
         if (result.needsVerification) {
           // Account is created and login works immediately — email verification is optional.
           const signupError = document.querySelector('#signupError');
-          signupError.innerHTML = `✅ Account created — you can log in now. <a href="/verify-email.html?token=${result.verificationToken}" style="color: #7ceea9; text-decoration: underline; cursor: pointer;">Verify email</a>`;
+          signupError.innerHTML = `✅ Account created — you can log in now. <a href="/verify-email?token=${result.verificationToken}" style="color: var(--success-text); text-decoration: underline; cursor: pointer;">Verify email</a>`;
           signupError.classList.add('show');
           signupError.classList.add('success');
           // Clear form
@@ -441,7 +453,7 @@
           btn.disabled = false;
           btn.classList.remove('loading');
         } else {
-          window.location.href = '/gym-select.html';
+          window.location.href = '/gym-select';
         }
       } catch (err) {
         showError('signupError', err.message);
@@ -499,7 +511,7 @@
 
     // Check if already logged in
     if (api.token) {
-      window.location.href = '/gym-select.html';
+      window.location.href = '/gym-select';
     }
 
     setupTheme();

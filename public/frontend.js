@@ -42,7 +42,7 @@ class RenewalRadarAPI {
 
     if (response.status === 401) {
       this.clearToken();
-      window.location.href = '/login.html';
+      window.location.href = '/login';
       throw new Error('Unauthorized');
     }
 
@@ -209,7 +209,7 @@ class RenewalRadarUI {
     this.isLoggedIn = false;
     this.user = null;
     this.selectedGymId = null;
-    window.location.href = '/login.html';
+    window.location.href = '/login';
   }
 
   async loadGyms() {

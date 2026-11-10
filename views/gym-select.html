@@ -20,6 +20,11 @@
       --blue: #5b9dff;
       --blue-soft: #9cc4ff;
       --green: #3ddc84;
+      --card: #151a24;
+      --card-line: rgba(255,255,255,.14);
+      --danger-text: #ffa3a8;
+      --danger-bg: rgba(240,85,95,.16);
+      --danger-line: rgba(240,85,95,.45);
       --input-bg: rgba(0,0,0,.28);
       --input-bg-focus: rgba(0,0,0,.36);
       --btn-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 1px 2px rgba(0,0,0,.25);
@@ -42,6 +47,11 @@
       --blue: #2563eb;
       --blue-soft: #1a4fc4;
       --green: #0f9250;
+      --card: #ffffff;
+      --card-line: rgba(15,20,30,.16);
+      --danger-text: #b91c1c;
+      --danger-bg: rgba(185,28,28,.08);
+      --danger-line: rgba(185,28,28,.30);
       --input-bg: #ffffff;
       --input-bg-focus: #ffffff;
       --btn-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(15,20,30,.07);
@@ -299,8 +309,8 @@
     }
 
     .modal-content {
-      background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
-      border: 1px solid var(--line);
+      background: var(--card);
+      border: 1px solid var(--card-line);
       border-radius: 13px;
       max-width: 420px;
       width: 100%;
@@ -337,7 +347,7 @@
     .form-group input {
       width: 100%;
       padding: 10px 12px;
-      border: 1px solid var(--line);
+      border: 1px solid var(--line-2);
       border-radius: 8px;
       background: var(--input-bg);
       color: var(--txt);
@@ -388,9 +398,9 @@
     .error-message {
       padding: 10px;
       border-radius: 8px;
-      background: rgba(240,85,95,.12);
-      border: 1px solid rgba(240,85,95,.32);
-      color: #ff8a92;
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-line);
+      color: var(--danger-text);
       font-size: 12px;
       margin-bottom: 16px;
       display: none;
@@ -507,7 +517,7 @@
 
     async function init() {
       if (!api.token) {
-        window.location.href = '/login.html';
+        window.location.href = '/login';
         return;
       }
 
@@ -519,7 +529,7 @@
       } catch (err) {
         console.error('Error initializing:', err);
         api.clearToken();
-        window.location.href = '/login.html';
+        window.location.href = '/login';
       }
     }
 
@@ -630,7 +640,7 @@
     document.getElementById('logoutBtn').addEventListener('click', () => {
       if (confirm('Are you sure you want to log out?')) {
         api.clearToken();
-        window.location.href = '/login.html';
+        window.location.href = '/login';
       }
     });
 
@@ -646,7 +656,7 @@
         await api.deleteAccount();
         api.clearToken();
         alert('Account deleted.');
-        window.location.href = '/login.html';
+        window.location.href = '/login';
       } catch (err) {
         alert('Failed to delete account: ' + err.message);
       }

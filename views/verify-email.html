@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0a0c10">
-  <title>Renewal Radar — Reset Password</title>
+  <title>Renewal Radar — Verify Email</title>
   <style>
     :root, [data-theme="dark"] {
       color-scheme: dark;
@@ -17,7 +17,6 @@
       --blue: #5b9dff;
       --green: #3ddc84;
       --red: #f0555f;
-      --input-bg: rgba(0,0,0,.28);
       --glow-1: rgba(91,157,255,.13);
       --glow-2: rgba(167,139,250,.11);
       --glow-3: rgba(61,220,132,.05);
@@ -34,7 +33,6 @@
       --blue: #2563eb;
       --green: #0f9250;
       --red: #d92d3a;
-      --input-bg: #ffffff;
       --glow-1: rgba(91,157,255,.16);
       --glow-2: rgba(167,139,250,.14);
       --glow-3: rgba(61,220,132,.08);
@@ -57,7 +55,7 @@
       background-attachment: fixed;
     }
 
-    .reset-container {
+    .verify-container {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -65,9 +63,9 @@
       padding: 20px;
     }
 
-    .reset-card {
+    .verify-card {
       width: 100%;
-      max-width: 440px;
+      max-width: 480px;
       padding: 40px;
       border-radius: 13px;
       border: 1px solid var(--line);
@@ -76,58 +74,44 @@
       text-align: center;
     }
 
-    .reset-icon {
-      font-size: 44px;
-      margin-bottom: 18px;
+    .verify-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
     }
 
-    .reset-title {
+    .verify-title {
       font-size: 22px;
       font-weight: 700;
-      margin: 0 0 10px 0;
+      margin: 0 0 12px 0;
       color: var(--txt);
     }
 
-    .reset-subtitle {
+    .verify-subtitle {
       font-size: 14px;
       color: var(--dim);
-      margin: 0 0 26px 0;
+      margin: 0 0 28px 0;
       line-height: 1.6;
     }
 
-    .form-group {
-      margin-bottom: 14px;
-      text-align: left;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--dim);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .form-group input {
+    .verify-input {
       width: 100%;
-      padding: 11px 13px;
+      padding: 12px 14px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: var(--input-bg);
+      background: rgba(0,0,0,.28);
       color: var(--txt);
-      font-size: 15px;
-      font-family: inherit;
+      font-size: 14px;
+      font-family: "Courier New", monospace;
+      margin-bottom: 16px;
       transition: border-color 0.18s;
     }
 
-    .form-group input:focus {
+    .verify-input:focus {
       outline: none;
       border-color: var(--blue);
     }
 
-    .reset-button {
+    .verify-button {
       width: 100%;
       padding: 11px 14px;
       border: none;
@@ -138,31 +122,39 @@
       font-weight: 600;
       cursor: pointer;
       transition: transform 0.14s, opacity 0.18s;
-      margin-top: 6px;
       margin-bottom: 12px;
     }
 
-    .reset-button:hover { opacity: 0.9; }
-    .reset-button:active { transform: scale(0.99); }
-    .reset-button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .verify-button:hover {
+      opacity: 0.9;
+    }
 
-    .reset-link {
+    .verify-button:active {
+      transform: scale(0.99);
+    }
+
+    .verify-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .verify-link {
       font-size: 13px;
       color: var(--blue);
       text-decoration: none;
       cursor: pointer;
     }
 
-    .reset-link:hover { text-decoration: underline; }
+    .verify-link:hover {
+      text-decoration: underline;
+    }
 
-    .error-message, .success-message {
+    .error-message, .success-message, .info-message {
       padding: 12px 14px;
       border-radius: 8px;
       font-size: 13px;
       margin-bottom: 16px;
       display: none;
-      text-align: left;
-      line-height: 1.5;
     }
 
     .error-message {
@@ -171,13 +163,30 @@
       color: #ff8a92;
     }
 
+    .error-message.show {
+      display: block;
+    }
+
     .success-message {
       background: rgba(61,220,132,.11);
       border: 1px solid rgba(61,220,132,.30);
       color: #7ceea9;
     }
 
-    .error-message.show, .success-message.show { display: block; }
+    .success-message.show {
+      display: block;
+    }
+
+    .info-message {
+      background: rgba(91,157,255,.12);
+      border: 1px solid rgba(91,157,255,.32);
+      color: #9cc4ff;
+      line-height: 1.6;
+    }
+
+    .info-message.show {
+      display: block;
+    }
 
     .theme-toggle {
       position: fixed;
@@ -195,13 +204,37 @@
       font-size: 0;
     }
 
-    .theme-toggle svg { width: 17px; height: 17px; }
+    .theme-toggle svg {
+      width: 17px;
+      height: 17px;
+    }
+
     .theme-toggle .icon-sun { display: none; }
     .theme-toggle .icon-moon { display: block; }
     [data-theme="light"] .theme-toggle .icon-sun { display: block; }
     [data-theme="light"] .theme-toggle .icon-moon { display: none; }
 
-    .loading { opacity: 0.6; pointer-events: none; }
+    .countdown {
+      font-size: 12px;
+      color: var(--dim);
+      margin-top: 12px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--blue);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -214,38 +247,43 @@
     </svg>
   </button>
 
-  <div class="reset-container">
-    <div class="reset-card">
-      <div class="reset-icon">🔐</div>
-      <h1 class="reset-title">Reset Password</h1>
-      <p class="reset-subtitle">Enter a new password for your account</p>
+  <div class="verify-container">
+    <div class="verify-card">
+      <div class="verify-icon" id="icon">📧</div>
+      <h1 class="verify-title">Verify Your Email</h1>
+      <p class="verify-subtitle" id="subtitle">Check your email for a verification link or enter the token below</p>
 
       <div id="errorMessage" class="error-message"></div>
       <div id="successMessage" class="success-message"></div>
+      <div id="infoMessage" class="info-message"></div>
 
-      <div id="resetForm">
-        <form id="resetFormElement" onsubmit="handleResetPassword(event)">
-          <div class="form-group">
-            <label for="newPassword">New Password</label>
-            <input type="password" id="newPassword" placeholder="At least 6 characters" required autocomplete="new-password">
-          </div>
-          <div class="form-group">
-            <label for="confirmPassword">Confirm Password</label>
-            <input type="password" id="confirmPassword" placeholder="Re-enter new password" required autocomplete="new-password">
-          </div>
-          <button type="submit" class="reset-button">Reset Password</button>
-        </form>
+      <div id="verificationForm">
+        <input 
+          type="text" 
+          id="verificationToken" 
+          class="verify-input" 
+          placeholder="Paste verification token here"
+          autocomplete="off"
+        >
+        <button class="verify-button" id="verifyBtn" onclick="handleVerify()">Verify Email</button>
+        
+        <div style="text-align: center; font-size: 13px; color: var(--dim);">
+          <a href="/login" class="verify-link">← Back to login</a>
+        </div>
+      </div>
+
+      <div id="loadingMessage" style="display: none; text-align: center;">
+        <div class="spinner"></div>
+        <p style="color: var(--dim); margin: 8px 0 0 0;">Verifying email...</p>
       </div>
 
       <div id="completedMessage" style="display: none; text-align: center;">
-        <div style="font-size: 44px; margin-bottom: 12px;">✅</div>
-        <p style="color: var(--green); font-weight: 600; margin: 0 0 12px 0;">Password reset!</p>
-        <p style="color: var(--dim); margin: 0 0 16px 0;">Redirecting to sign in...</p>
+        <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
+        <p style="color: var(--green); font-weight: 600; margin: 0 0 12px 0;">Email verified!</p>
+        <p style="color: var(--dim); margin: 0 0 16px 0;">Redirecting to your gym...</p>
       </div>
 
-      <div style="text-align: center; font-size: 13px; color: var(--dim);">
-        <a href="/login.html" class="reset-link">← Back to login</a>
-      </div>
+      <div class="countdown" id="countdown"></div>
     </div>
   </div>
 
@@ -267,54 +305,74 @@
       });
     }
 
-    function getTokenFromURL() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('token') || '';
+    // Check if already logged in
+    if (api.token) {
+      window.location.href = '/gym-select';
     }
 
-    async function handleResetPassword(event) {
-      event.preventDefault();
+    // Get token from URL or localStorage
+    function getVerificationToken() {
+      const params = new URLSearchParams(window.location.search);
+      const urlToken = params.get('token');
+      if (urlToken) return urlToken;
+      return localStorage.getItem('rr_verificationToken') || '';
+    }
 
-      const token = getTokenFromURL();
-      const newPassword = document.getElementById('newPassword').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
+    async function handleVerify() {
+      const token = document.getElementById('verificationToken').value.trim();
       const errorEl = document.getElementById('errorMessage');
-      const btn = event.target.querySelector('button');
+      const successEl = document.getElementById('successMessage');
+      const btn = document.getElementById('verifyBtn');
 
       errorEl.classList.remove('show');
+      successEl.classList.remove('show');
 
       if (!token) {
-        errorEl.textContent = 'Missing reset link. Please request a new password reset.';
-        errorEl.classList.add('show');
-        return;
-      }
-
-      if (newPassword !== confirmPassword) {
-        errorEl.textContent = 'Passwords do not match';
+        errorEl.textContent = 'Please enter a verification token';
         errorEl.classList.add('show');
         return;
       }
 
       btn.disabled = true;
-      btn.classList.add('loading');
+      document.getElementById('verificationForm').style.display = 'none';
+      document.getElementById('loadingMessage').style.display = 'block';
 
       try {
-        await api.resetPassword(token, newPassword);
-        document.getElementById('resetForm').style.display = 'none';
+        const result = await api.verifyEmail(token);
+        
+        document.getElementById('loadingMessage').style.display = 'none';
         document.getElementById('completedMessage').style.display = 'block';
 
+        // Redirect after 2 seconds
         setTimeout(() => {
-          window.location.href = '/login.html';
+          window.location.href = '/gym-select';
         }, 2000);
       } catch (err) {
+        document.getElementById('verificationForm').style.display = 'block';
+        document.getElementById('loadingMessage').style.display = 'none';
         errorEl.textContent = err.message;
         errorEl.classList.add('show');
         btn.disabled = false;
-        btn.classList.remove('loading');
       }
     }
 
+    // If token in URL, auto-verify
+    function autoVerifyIfToken() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      if (token) {
+        document.getElementById('verificationToken').value = token;
+        setTimeout(handleVerify, 500);
+      }
+    }
+
+    // Handle Enter key
+    document.getElementById('verificationToken').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleVerify();
+    });
+
     setupTheme();
+    autoVerifyIfToken();
   </script>
 </body>
 </html>
