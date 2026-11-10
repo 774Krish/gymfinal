@@ -1689,11 +1689,19 @@ Michael Doyle, 07700 900789"></textarea>
       const raw   = (planRaw || "").toLowerCase().replace(/[^a-z]/g, "");
       const plan  = PLANS[raw] ? raw : "monthly";
       const start = /^\d{4}-\d{2}-\d{2}$/.test(dateRaw || "") ? dateRaw : iso(today());
-      state.members.push({
+      const newMember = {
         id: uid(), name, phone: cleanPhone(phone), plan,
         expiry: iso(addDays(new Date(start+"T00:00:00"), PLANS[plan].days)),
         pt: 0, ptLeft: 0, lastReminded: null, status: "active", flagged: false, note: ""
-      });
+      };
+      state.members.push(newMember);
+
+      // Sync each imported member to the backend so it persists
+      if (isUsingBackend && currentGymId) {
+        addMemberToBackend(newMember).catch(err => {
+          console.error('Failed to sync imported member to backend:', err);
+        });
+      }
     });
     closeModal(); render();
     toast(`${rows.length} member${rows.length === 1 ? "" : "s"} imported`);
