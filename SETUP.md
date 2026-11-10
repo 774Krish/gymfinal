@@ -148,6 +148,47 @@ DEMO_PASSWORD=Demo12345            # Seeded demo password
 - **Production (recommended):** set `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` (from [Turso](https://turso.tech)). Data then persists across restarts and redeploys.
 - **Local dev:** leave both unset and the app falls back to a local `backend/renewal-radar.db` file automatically — no cloud setup needed.
 
+## Deploying
+
+### Option A — Vercel (serverless)
+
+Vercel runs the app as a single serverless Function. The project is already
+structured for it:
+
+- `app.js` (root) — the Vercel entry point (exports the Express app).
+- `backend/app.js` — the Express app itself (no `app.listen()`).
+- `public/` — static frontend files (Vercel serves these from its CDN).
+- `package.json` (root) — dependencies Vercel installs.
+
+To deploy:
+
+1. Push the repo to GitHub.
+2. On [vercel.com](https://vercel.com/new), import the repository.
+3. Vercel auto-detects Express (zero config). No build command needed.
+4. Add the same environment variables (JWT_SECRET, TURSO_DATABASE_URL,
+   TURSO_AUTH_TOKEN, FRONTEND_URL, EMAIL_*) in Project → Settings →
+   Environment Variables.
+5. Deploy.
+
+Notes:
+
+- `express.static()` is ignored on Vercel — static files must stay in `public/`.
+- Database init runs lazily on the first request of each warm instance.
+- Verification email is sent in the background; on serverless it may not always
+  complete after the response returns. Login does not require verification.
+
+### Option B — Render (long-running server)
+
+`backend/server.js` is a normal Express server that listens on a port.
+Deploy it as a Node.js web service on Render with:
+
+- **Build command:** `npm install`
+- **Start command:** `node server.js`
+- **Root directory:** `backend`
+
+Set the same environment variables listed above.
+
+
 ## API Endpoints
 
 ### Authentication

@@ -1,0 +1,20 @@
+{
+  "name": "renewal-radar",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Renewal Radar — gym member management SaaS",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.18.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "nodemailer": "^6.10.1"
+  }
+}
