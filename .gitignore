@@ -58,3 +58,5 @@ coverage/
 # ---- deploy platform metadata ----
 .vercel/
 .netlify/
+.vercel
+.env*
