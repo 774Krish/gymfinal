@@ -1139,7 +1139,7 @@ async function addMemberToBackend(member) {
       notes: member.note
     };
     const result = await api.addMember(currentGymId, data);
-    member.id = result.id;
+    member.id = String(result.id);          // keep IDs as strings for dataset lookups
     return result;
   } catch (err) {
     console.error('Failed to add member to backend:', err);
@@ -1166,7 +1166,7 @@ async function loadBackendGymData() {
     // Always take the server's member list — an empty gym should be empty,
     // not the prototype demo members.
     state.members = (gymData.members || []).map(m => ({
-      id: m.id,
+      id: String(m.id),                    // keep IDs as strings — buttons compare via dataset (string)
       name: m.name,
       phone: m.phone,
       plan: m.plan,
