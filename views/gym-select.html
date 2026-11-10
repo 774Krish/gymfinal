@@ -259,6 +259,38 @@
       font-weight: 500;
     }
 
+    .gym-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .gym-del-btn {
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      border: 1px solid rgba(240, 85, 95, 0.35);
+      background: rgba(240, 85, 95, 0.08);
+      color: #f0555f;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      transition: background 0.18s, border-color 0.18s;
+    }
+
+    .gym-del-btn:hover {
+      background: rgba(240, 85, 95, 0.18);
+      border-color: rgba(240, 85, 95, 0.6);
+    }
+
+    .gym-del-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
     .create-gym-btn {
       padding: 20px;
       border-radius: 13px;
@@ -561,8 +593,17 @@
 
       const gymCardsHtml = gyms.map(gym => `
         <div class="gym-card" onclick="selectGym(${gym.id})">
-          <h3 class="gym-name">${escapeHtml(gym.name)}</h3>
-          <p class="gym-location">${gym.location ? escapeHtml(gym.location) : 'No location set'}</p>
+          <div class="gym-card-top">
+            <div>
+              <h3 class="gym-name">${escapeHtml(gym.name)}</h3>
+              <p class="gym-location">${gym.location ? escapeHtml(gym.location) : 'No location set'}</p>
+            </div>
+            <button class="gym-del-btn" title="Delete gym" onclick="deleteGym(${gym.id}, event)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+              </svg>
+            </button>
+          </div>
           <div class="gym-action">Open →</div>
         </div>
       `).join('');
@@ -599,6 +640,28 @@
         window.location.href = '/';
       } catch (err) {
         alert('Error selecting gym: ' + err.message);
+      }
+    }
+
+    async function deleteGym(gymId, event) {
+      // Don't bubble up to the card's selectGym click
+      if (event) event.stopPropagation();
+
+      if (!confirm('Delete this gym and ALL its members? This cannot be undone.')) {
+        return;
+      }
+
+      try {
+        await api.deleteGym(gymId);
+
+        // If the deleted gym was the selected one, clear the selection
+        if (localStorage.getItem('rr_selectedGym') === String(gymId)) {
+          localStorage.removeItem('rr_selectedGym');
+        }
+
+        await loadGyms();
+      } catch (err) {
+        alert('Failed to delete gym: ' + err.message);
       }
     }
 

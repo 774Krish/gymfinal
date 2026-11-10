@@ -151,6 +151,10 @@ class RenewalRadarAPI {
     });
   }
 
+  async deleteGym(gymId) {
+    return this.makeRequest(`/gyms/${gymId}`, { method: 'DELETE' });
+  }
+
   // Members
   async addMember(gymId, memberData) {
     return this.makeRequest(`/gyms/${gymId}/members`, {

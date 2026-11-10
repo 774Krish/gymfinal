@@ -239,6 +239,33 @@ router.put('/gyms/:gymId', authMiddleware, async (req, res) => {
   }
 });
 
+// Delete gym (and all its members/activity)
+router.delete('/gyms/:gymId', authMiddleware, async (req, res) => {
+  try {
+    const { gymId } = req.params;
+
+    // Verify the user owns this gym
+    const gym = await dbGet(
+      'SELECT g.* FROM gyms g JOIN user_gyms ug ON g.id = ug.gymId WHERE g.id = ? AND ug.userId = ? AND ug.role = ?',
+      [gymId, req.userId, 'owner']
+    );
+
+    if (!gym) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Explicitly clean up related rows (works even if FK cascades are off)
+    await dbRun('DELETE FROM members WHERE gymId = ?', [gymId]);
+    await dbRun('DELETE FROM activity_log WHERE gymId = ?', [gymId]);
+    await dbRun('DELETE FROM user_gyms WHERE gymId = ?', [gymId]);
+    await dbRun('DELETE FROM gyms WHERE id = ?', [gymId]);
+
+    res.json({ success: true, message: 'Gym deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============ MEMBERS ============
 
 // Add member to gym
