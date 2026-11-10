@@ -4,10 +4,17 @@ require('dotenv').config();
 
 // Use Turso (libSQL) when TURSO_DATABASE_URL is set; otherwise fall back to a
 // local SQLite file so local dev works with zero cloud setup.
+const TURSO_URL = process.env.TURSO_DATABASE_URL;
 const client = createClient({
-  url: process.env.TURSO_DATABASE_URL || `file:${path.join(__dirname, 'renewal-radar.db')}`,
+  url: TURSO_URL || `file:${path.join(__dirname, 'renewal-radar.db')}`,
   authToken: process.env.TURSO_AUTH_TOKEN || undefined,
 });
+
+if (TURSO_URL) {
+  console.log('DB: using Turso (persistent)');
+} else {
+  console.log('DB: WARNING — using local file fallback (NOT persistent on serverless platforms like Vercel)');
+}
 
 // Backwards-compatible export name (kept in case other modules import `db`).
 const db = client;

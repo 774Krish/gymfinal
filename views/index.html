@@ -1214,7 +1214,7 @@ function msgFor(m){
 }
 
 /* ---------- render ---------- */
-let tab = "action";
+let tab = "all";
 let query = "";
 let sortMode = (function(){
   try{
@@ -1225,11 +1225,11 @@ let sortMode = (function(){
 })();
 
 const TABS = [
+  { id:"all",     key:"tabAll"     },
   { id:"action",  key:"tabAction"  },
   { id:"lapsed",  key:"tabLapsed"  },
   { id:"soon",    key:"tabSoon"    },
-  { id:"flagged", key:"tabFlagged" },
-  { id:"all",     key:"tabAll"     }
+  { id:"flagged", key:"tabFlagged" }
 ];
 
 const SORT_LABEL = { urgency:"Urgency", az:"A–Z", za:"Z–A" };
