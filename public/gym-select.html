@@ -586,7 +586,7 @@
     async function selectGym(gymId) {
       try {
         localStorage.setItem('rr_selectedGym', gymId);
-        window.location.href = '/index.html';
+        window.location.href = '/';
       } catch (err) {
         alert('Error selecting gym: ' + err.message);
       }
