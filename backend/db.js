@@ -53,6 +53,8 @@ async function initializeDB() {
       ptSessions INTEGER DEFAULT 0,
       ptSessionsRemaining INTEGER DEFAULT 0,
       notes TEXT,
+      flagged INTEGER DEFAULT 0,
+      lastRemindedDate DATE,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(gymId) REFERENCES gyms(id) ON DELETE CASCADE
@@ -98,6 +100,20 @@ async function migrateUsersTable() {
   }
 }
 
+// Add columns added later to the members table (flagged, lastRemindedDate)
+async function migrateMembersTable() {
+  const cols = await dbAll('PRAGMA table_info(members)');
+  const names = cols.map(c => c.name);
+  const missing = [
+    { name: 'flagged', ddl: 'flagged INTEGER DEFAULT 0' },
+    { name: 'lastRemindedDate', ddl: 'lastRemindedDate DATE' }
+  ].filter(c => !names.includes(c.name));
+
+  for (const col of missing) {
+    await dbRun(`ALTER TABLE members ADD COLUMN ${col.ddl}`);
+  }
+}
+
 // Helper functions to run queries against libSQL/Turso.
 // dbRun returns a sqlite3-like object (lastID, changes) for compatibility.
 async function dbRun(sql, params = []) {
@@ -123,6 +139,7 @@ module.exports = {
   db,
   initializeDB,
   migrateUsersTable,
+  migrateMembersTable,
   dbRun,
   dbGet,
   dbAll

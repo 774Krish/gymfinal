@@ -3,7 +3,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
-const { initializeDB, migrateUsersTable } = require('./db');
+const { initializeDB, migrateUsersTable, migrateMembersTable } = require('./db');
 const { seedDemoUser } = require('./seed');
 const routes = require('./routes');
 
@@ -22,6 +22,7 @@ function ensureReady() {
   if (!readyPromise) {
     readyPromise = initializeDB()
       .then(() => migrateUsersTable())
+      .then(() => migrateMembersTable())
       .then(() => seedDemoUser())
       .catch(err => {
         readyPromise = null;

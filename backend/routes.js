@@ -272,7 +272,7 @@ router.delete('/gyms/:gymId', authMiddleware, async (req, res) => {
 router.post('/gyms/:gymId/members', authMiddleware, async (req, res) => {
   try {
     const { gymId } = req.params;
-    const { name, phone, email, plan, startDate, renewalDate, ptSessions, notes } = req.body;
+    const { name, phone, email, plan, startDate, renewalDate, ptSessions, notes, flagged } = req.body;
 
     // Verify access
     const access = await dbGet(
@@ -289,9 +289,9 @@ router.post('/gyms/:gymId/members', authMiddleware, async (req, res) => {
     }
 
     const result = await dbRun(
-      `INSERT INTO members (gymId, name, phone, email, plan, startDate, renewalDate, ptSessions, ptSessionsRemaining, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [gymId, name, phone || '', email || '', plan || '', startDate || null, renewalDate || null, ptSessions || 0, ptSessions || 0, notes || '']
+      `INSERT INTO members (gymId, name, phone, email, plan, startDate, renewalDate, ptSessions, ptSessionsRemaining, notes, flagged)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [gymId, name, phone || '', email || '', plan || '', startDate || null, renewalDate || null, ptSessions || 0, ptSessions || 0, notes || '', flagged ? 1 : 0]
     );
 
     await dbRun(
@@ -388,14 +388,16 @@ router.put('/gyms/:gymId/members/:memberId', authMiddleware, async (req, res) =>
     }
 
     // Build update query dynamically
-    const fields = ['name', 'phone', 'email', 'plan', 'startDate', 'renewalDate', 'lastRenewalDate', 'status', 'ptSessions', 'ptSessionsRemaining', 'notes'];
+    const fields = ['name', 'phone', 'email', 'plan', 'startDate', 'renewalDate', 'lastRenewalDate', 'status', 'ptSessions', 'ptSessionsRemaining', 'notes', 'flagged', 'lastRemindedDate'];
     const updateParts = [];
     const params = [];
 
     fields.forEach(field => {
       if (field in updates) {
+        // Coerce booleans for integer columns
+        const val = (field === 'flagged') ? (updates[field] ? 1 : 0) : updates[field];
         updateParts.push(`${field} = ?`);
-        params.push(updates[field]);
+        params.push(val);
       }
     });
 

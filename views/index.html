@@ -1118,7 +1118,9 @@ async function syncMemberChanges(member) {
       ptSessions: member.pt,
       ptSessionsRemaining: member.ptLeft,
       notes: member.note,
-      status: member.status
+      status: member.status,
+      flagged: !!member.flagged,
+      lastRemindedDate: member.lastReminded || null
     };
     await api.updateMember(currentGymId, member.id, updates);
   } catch (err) {
@@ -1175,7 +1177,7 @@ async function loadBackendGymData() {
       ptLeft: m.ptSessionsRemaining || 0,
       lastReminded: m.lastRemindedDate || null,
       status: m.status || 'active',
-      flagged: false,
+      flagged: !!m.flagged,
       note: m.notes || ''
     }));
   } catch (err) {
@@ -1621,6 +1623,9 @@ function openNote(id){
   const commit = () => {
     m.note = ta.value.trim();
     save(); closeModal(); render();
+    if (isUsingBackend && currentGymId) {
+      syncMemberChanges(m).catch(err => console.error('Failed to sync note:', err));
+    }
   };
 
   document.getElementById("note-save").onclick = () => {
@@ -1634,7 +1639,11 @@ function openNote(id){
   document.getElementById("note-cancel").onclick = closeModal;
 
   const del = document.getElementById("note-del");
-  if (del) del.onclick = () => { m.note = ""; save(); closeModal(); render(); toast(t("noteDeleted")); };
+  if (del) del.onclick = () => { m.note = ""; save(); closeModal(); render();
+    if (isUsingBackend && currentGymId) {
+      syncMemberChanges(m).catch(err => console.error('Failed to sync note deletion:', err));
+    }
+    toast(t("noteDeleted")); };
 
   // Ctrl / Cmd + Enter saves
   ta.addEventListener("keydown", e => {
@@ -1716,6 +1725,9 @@ document.getElementById("list").addEventListener("click", e => {
     window.open(`https://wa.me/${waPhone(m.phone)}?text=${encodeURIComponent(msgFor(m))}`, "_blank");
     m.lastReminded = iso(today());
     save(); render();
+    if (isUsingBackend && currentGymId) {
+      syncMemberChanges(m).catch(err => console.error('Failed to sync reminder:', err));
+    }
     toast(t("reminderOk",{n:m.name.split(" ")[0]}));
     return;
   }
@@ -1728,6 +1740,9 @@ document.getElementById("list").addEventListener("click", e => {
     m.lastReminded = null;
     state.renewals.push({ at: new Date().toISOString(), amount: plan.price, name: m.name });
     save(); render();
+    if (isUsingBackend && currentGymId) {
+      syncMemberChanges(m).catch(err => console.error('Failed to sync renewal:', err));
+    }
     toast(t("renewedOk",{n:m.name.split(" ")[0], p:money(plan.price)}));
     return;
   }
@@ -1738,6 +1753,9 @@ document.getElementById("list").addEventListener("click", e => {
     const m = state.members.find(x => x.id === fg.dataset.flag);
     m.flagged = !m.flagged;
     save(); render();
+    if (isUsingBackend && currentGymId) {
+      syncMemberChanges(m).catch(err => console.error('Failed to sync flag:', err));
+    }
     toast(t(m.flagged ? "flaggedOk" : "unflaggedOk", {n: m.name.split(" ")[0]}));
     return;
   }
